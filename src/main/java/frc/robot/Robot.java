@@ -7,7 +7,11 @@
 
 package frc.robot;
 
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.drive.MecanumDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -24,6 +28,15 @@ public class Robot extends TimedRobot {
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
 
+  public WPI_TalonSRX frontLeft; //
+  public WPI_TalonSRX frontRight; //
+  public WPI_TalonSRX rearLeft; //
+  public WPI_TalonSRX rearRight; //
+
+  public MecanumDrive robotDrive; //
+
+  public Joystick joystick; //
+
   /**
    * This function is run when the robot is first started up and should be
    * used for any initialization code.
@@ -33,6 +46,15 @@ public class Robot extends TimedRobot {
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
+
+    frontLeft = new WPI_TalonSRX(1); //
+    frontRight = new WPI_TalonSRX(2); //
+    rearLeft = new WPI_TalonSRX(3); //
+    rearRight = new WPI_TalonSRX(4); //
+
+    robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight); //
+
+    joystick = new Joystick(0); //
   }
 
   /**
@@ -86,6 +108,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
+    robotDrive.driveCartesian(joystick.getRawAxis(1), joystick.getRawAxis(0), joystick.getRawAxis(2)); //
   }
 
   /**
