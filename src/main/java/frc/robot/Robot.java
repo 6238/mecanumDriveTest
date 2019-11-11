@@ -9,7 +9,9 @@ package frc.robot;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
-import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -28,14 +30,29 @@ public class Robot extends TimedRobot {
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
 
-  public WPI_TalonSRX frontLeft; //
-  public WPI_TalonSRX frontRight; //
-  public WPI_TalonSRX rearLeft; //
-  public WPI_TalonSRX rearRight; //
+  private WPI_TalonSRX frontLeft;
+  private WPI_TalonSRX frontRight;
+  private WPI_TalonSRX rearLeft;
+  private WPI_TalonSRX rearRight;
 
-  public MecanumDrive robotDrive; //
+  public MecanumDrive robotDrive;
 
-  public Joystick joystick; //
+  private WPI_TalonSRX intakeLeft;
+  private WPI_TalonSRX intakeRight;
+  public SpeedControllerGroup intake;
+
+  public Compressor compressor;
+
+  public DoubleSolenoid elevator;
+
+  public JoystickController joystick;
+
+  private boolean elevatorUp;
+  private boolean elevatorDown;
+
+  private boolean intakeIn;
+  private boolean intakeOut;
+  private double intakeSpeed;
 
   /**
    * This function is run when the robot is first started up and should be
@@ -47,14 +64,27 @@ public class Robot extends TimedRobot {
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
 
-    frontLeft = new WPI_TalonSRX(1); //
-    frontRight = new WPI_TalonSRX(2); //
-    rearLeft = new WPI_TalonSRX(3); //
-    rearRight = new WPI_TalonSRX(4); //
+    frontLeft = new WPI_TalonSRX(1);
+    frontRight = new WPI_TalonSRX(2);
+    rearLeft = new WPI_TalonSRX(3);
+    rearRight = new WPI_TalonSRX(4);
 
-    robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight); //
+    robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
 
-    joystick = new Joystick(0); //
+    intakeLeft = new WPI_TalonSRX(7);
+    intakeRight = new WPI_TalonSRX(8);
+
+    intakeLeft.setInverted(false);
+    intakeRight.setInverted(true);
+    intake = new SpeedControllerGroup(intakeLeft, intakeRight);
+    intakeSpeed = 1;
+
+    compressor = new Compressor();
+    compressor.setClosedLoopControl(true);
+
+    elevator = new DoubleSolenoid(2, 3);
+
+    joystick = new JoystickController(0);
   }
 
   /**
@@ -108,7 +138,29 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    robotDrive.driveCartesian(joystick.getRawAxis(1), joystick.getRawAxis(0), joystick.getRawAxis(2)); //
+    robotDrive.driveCartesian(joystick.getJoystickY(), joystick.getJoystickX(), -1 * joystick.getJoystickZ());
+
+    elevatorUp = joystick.getButtonSix();
+    elevatorDown = joystick.getButtonFour();
+
+    if (elevatorUp) {
+      elevator.set(DoubleSolenoid.Value.kForward);
+    } else if (elevatorDown) {
+      elevator.set(DoubleSolenoid.Value.kReverse);
+    } else {
+      elevator.set(DoubleSolenoid.Value.kOff);
+    }
+
+    intakeIn = joystick.getButtonThree();
+    intakeOut = joystick.getButtonFive();
+
+    if (intakeIn) {
+      intake.set(intakeSpeed);
+    } else if (intakeOut) {
+      intake.set(-1 * intakeSpeed);
+    } else {
+      intake.set(0);
+    }
   }
 
   /**
